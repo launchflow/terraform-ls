@@ -14,10 +14,8 @@ import (
 	"github.com/hashicorp/terraform-ls/internal/features/modules/parser"
 	"github.com/hashicorp/terraform-ls/internal/features/modules/state"
 	"github.com/hashicorp/terraform-ls/internal/job"
-	ilsp "github.com/hashicorp/terraform-ls/internal/lsp"
 	globalAst "github.com/hashicorp/terraform-ls/internal/terraform/ast"
 	op "github.com/hashicorp/terraform-ls/internal/terraform/module/operation"
-	"github.com/hashicorp/terraform-ls/internal/uri"
 )
 
 // ParseModuleConfiguration parses the module configuration,
@@ -48,49 +46,17 @@ func ParseModuleConfiguration(ctx context.Context, fs ReadOnlyFS, modStore *stat
 
 	var files ast.ModFiles
 	var diags ast.ModDiags
-	// Only parse the file that's being changed/opened, unless this is 1st-time parsing
-	if mod.ModuleDiagnosticsState[globalAst.HCLParsingSource] == op.OpStateLoaded && rpcContext.IsDidChangeRequest() && rpcContext.LanguageID == ilsp.Terraform.String() {
-		log.Printf("Parsing single file due to change: %s", rpcContext.URI)
+	// Always re-parse the module, otherwise there are some bugs -- that we should eventually figure out
+	log.Printf("Parsing entire module at: %s", modPath)
 
-		// the file has already been parsed, so only examine this file and not the whole module
-		err = modStore.SetModuleDiagnosticsState(modPath, globalAst.HCLParsingSource, op.OpStateLoading)
-		if err != nil {
-			return err
-		}
-
-		filePath, err := uri.PathFromURI(rpcContext.URI)
-		if err != nil {
-			return err
-		}
-		fileName := filepath.Base(filePath)
-
-		f, fDiags, err := parser.ParseModuleFile(fs, filePath)
-		if err != nil {
-			return err
-		}
-		existingFiles := mod.ParsedModuleFiles.Copy()
-		existingFiles[ast.ModFilename(fileName)] = f
-		files = existingFiles
-
-		existingDiags, ok := mod.ModuleDiagnostics[globalAst.HCLParsingSource]
-		if !ok {
-			existingDiags = make(ast.ModDiags)
-		} else {
-			existingDiags = existingDiags.Copy()
-		}
-		existingDiags[ast.ModFilename(fileName)] = fDiags
-		diags = existingDiags
-	} else {
-		log.Printf("Parsing entire module at: %s", modPath)
-
-		// this is the first time file is opened so parse the whole module
-		err = modStore.SetModuleDiagnosticsState(modPath, globalAst.HCLParsingSource, op.OpStateLoading)
-		if err != nil {
-			return err
-		}
-
-		files, diags, err = parser.ParseModuleFiles(fs, modPath)
+	// this is the first time file is opened so parse the whole module
+	err = modStore.SetModuleDiagnosticsState(modPath, globalAst.HCLParsingSource, op.OpStateLoading)
+	if err != nil {
+		return err
 	}
+
+	files, diags, err = parser.ParseModuleFiles(fs, modPath)
+
 	fileNames := make([]string, 0, len(files))
 	for name := range files {
 		fileNames = append(fileNames, string(name))
