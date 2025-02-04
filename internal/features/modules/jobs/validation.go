@@ -104,10 +104,10 @@ func SchemaModuleValidation(ctx context.Context, modStore *state.ModuleStore, ro
 // It relies on [DecodeReferenceTargets] and [DecodeReferenceOrigins]
 // to supply both origins and targets to compare.
 func ReferenceValidation(ctx context.Context, modStore *state.ModuleStore, rootFeature fdecoder.RootReader, modPath string) error {
-	_, err := modStore.ModuleRecordByPath(modPath)
-	// if err != nil {
-	// 	return err
-	// }
+	mod, err := modStore.ModuleRecordByPath(modPath)
+	if err != nil {
+		return err
+	}
 
 	// Avoid validation if it is already in progress or already finished
 	if mod.ModuleDiagnosticsState[globalAst.ReferenceValidationSource] != op.OpStateUnknown && !job.IgnoreState(ctx) {
