@@ -110,9 +110,9 @@ func ReferenceValidation(ctx context.Context, modStore *state.ModuleStore, rootF
 	// }
 
 	// Avoid validation if it is already in progress or already finished
-	// if mod.ModuleDiagnosticsState[globalAst.ReferenceValidationSource] != op.OpStateUnknown && !job.IgnoreState(ctx) {
-	// 	return job.StateNotChangedErr{Dir: document.DirHandleFromPath(modPath)}
-	// }
+	if mod.ModuleDiagnosticsState[globalAst.ReferenceValidationSource] != op.OpStateUnknown && !job.IgnoreState(ctx) {
+		return job.StateNotChangedErr{Dir: document.DirHandleFromPath(modPath)}
+	}
 
 	err = modStore.SetModuleDiagnosticsState(modPath, globalAst.ReferenceValidationSource, op.OpStateLoading)
 	if err != nil {

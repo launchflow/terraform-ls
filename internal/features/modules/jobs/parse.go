@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	lsctx "github.com/hashicorp/terraform-ls/internal/context"
+	"github.com/hashicorp/terraform-ls/internal/document"
 	"github.com/hashicorp/terraform-ls/internal/features/modules/ast"
 	"github.com/hashicorp/terraform-ls/internal/features/modules/parser"
 	"github.com/hashicorp/terraform-ls/internal/features/modules/state"
@@ -41,11 +42,9 @@ func ParseModuleConfiguration(ctx context.Context, fs ReadOnlyFS, modStore *stat
 	// TODO: Avoid parsing if the content matches existing AST
 
 	// Avoid parsing if it is already in progress or already known AND we've already parsed this file
-	// if mod.ModuleDiagnosticsState[globalAst.HCLParsingSource] != op.OpStateUnknown && !job.IgnoreState(ctx) {
-	// 	log.Printf("Early return from ParseModuleConfiguration. Module state: %+v", mod)
-	// 	log.Printf("module diagnostics state: %+v", mod.ModuleDiagnosticsState[globalAst.HCLParsingSource])
-	// 	return job.StateNotChangedErr{Dir: document.DirHandleFromPath(modPath)}
-	// }
+	if mod.ModuleDiagnosticsState[globalAst.HCLParsingSource] != op.OpStateUnknown && !job.IgnoreState(ctx) {
+		return job.StateNotChangedErr{Dir: document.DirHandleFromPath(modPath)}
+	}
 
 	var files ast.ModFiles
 	var diags ast.ModDiags
