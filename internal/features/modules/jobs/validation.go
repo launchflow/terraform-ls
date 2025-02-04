@@ -5,6 +5,7 @@ package jobs
 
 import (
 	"context"
+	"log"
 	"path"
 
 	"github.com/hashicorp/hcl-lang/decoder"
@@ -80,6 +81,9 @@ func SchemaModuleValidation(ctx context.Context, modStore *state.ModuleStore, ro
 		if sErr != nil {
 			return sErr
 		}
+
+		log.Printf("SchemaModuleValidation for changed file %s", filename)
+		log.Printf("Schema validation diagnostics: %+v", fileDiags)
 	} else {
 		// We validate the whole module, e.g. on open
 		var diags lang.DiagnosticsMap
@@ -127,7 +131,9 @@ func ReferenceValidation(ctx context.Context, modStore *state.ModuleStore, rootF
 		return err
 	}
 
+	log.Printf("ReferenceValidation for module %s", modPath)
 	diags := validations.UnreferencedOrigins(ctx, pathCtx)
+	log.Printf("Reference validation diagnostics: %+v", diags)
 	return modStore.UpdateModuleDiagnostics(modPath, globalAst.ReferenceValidationSource, ast.ModDiagsFromMap(diags))
 }
 

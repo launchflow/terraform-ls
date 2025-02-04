@@ -13,11 +13,12 @@ import (
 type ignoreState struct{}
 
 func IgnoreState(ctx context.Context) bool {
-	v, ok := ctx.Value(ignoreState{}).(bool)
-	if !ok {
-		return false
-	}
-	return v
+	return true
+	// v, ok := ctx.Value(ignoreState{}).(bool)
+	// if !ok {
+	// 	return false
+	// }
+	// return v
 }
 
 func WithIgnoreState(ctx context.Context, ignore bool) context.Context {
